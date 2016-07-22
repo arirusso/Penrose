@@ -298,7 +298,7 @@ void io_processButtonsPipelined()
 		io_lastButtonState &= ~(1<<i);
 		io_lastButtonState |=val<<i;
 		//toggle LED
-		if(val)
+		if(!val)
 		{
 		  timer_touchAutosave();
 		  if(!(io_ledState&(1<<i)))
@@ -356,4 +356,3 @@ uint8_t io_isButtonPushed(uint8_t buttonNr)
   return val;
 }
 //-----------------------------------------------------------
-
