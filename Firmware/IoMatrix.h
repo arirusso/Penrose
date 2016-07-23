@@ -63,6 +63,8 @@
 #define BUTTON_SHIFT 11
 #define SHIFTED_BUTTON_OCTAVE_DOWN 0
 #define SHIFTED_BUTTON_OCTAVE_UP 1
+#define OCTAVE_MIN -4
+#define OCTAVE_MAX 4
 
 void io_init();
 //one circle trough the whole LED matrix
@@ -77,9 +79,11 @@ uint16_t io_getActiveSteps();
 void io_setActiveSteps(uint16_t val);
 void io_setCurrentQuantizedValue(uint8_t value);
 uint8_t io_isButtonPushed(uint8_t buttonNr);
-uint8_t octaveNum;
+int8_t io_octaveNum;
 uint8_t io_isButtonLongPushed(uint8_t num);
+uint8_t io_isShiftActive();
 void io_handleShiftedButtonPushed(uint8_t buttonNr);
 void io_enableShiftMode();
+void io_disableShiftMode();
 
 #endif /* IOMATRIX_H_ */

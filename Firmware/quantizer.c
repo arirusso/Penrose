@@ -92,7 +92,7 @@ void init()
 
     sei();
 
-    octaveNum = 3;
+    io_octaveNum = 0;
 }
 //-----------------------&= ------------------------------------
 void process()
@@ -162,7 +162,7 @@ uint8_t quantizeValue(uint16_t input)
 	  octave++;
 	}
 
-	quantValue = ((octave + octaveNum) * 12) + note;
+	quantValue = ((octave + io_octaveNum) * 12) + note;
 
 	//store to matrix
 	io_setCurrentQuantizedValue(note);

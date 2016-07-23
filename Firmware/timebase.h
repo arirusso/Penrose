@@ -26,7 +26,7 @@
 
 #define GATE_LENGTH 12 // [ms] maximum is 12 (=>240, more will not fit into OCR0A and a 16 bit timer must be used)
 #define AUTOSAVE_TIME 15 // [sec]
-#define LONGPRESS_TIME 2 // [sec]
+#define LONGPRESS_TIME 1 // [sec]
 
 void timer_init();
 
@@ -42,7 +42,8 @@ void timer0_start();
  * - autosave should only happen AUTOSAVE_TIME seconds after the last change
  */
 void timer_touchAutosave();
-void timer_touchButtonpress();
 /* checks timer variables if an autosave is needed */
 void checkAutosave();
-uint8_t timer_isLongPress();
+void timer_buttonPress(uint8_t buttonNum);
+void timer_buttonRelease(uint8_t buttonNum);
+uint8_t timer_isLongButtonPress(uint8_t buttonNum);

@@ -32,6 +32,7 @@
 static volatile uint8_t autosave_counter = 0;
 static volatile uint8_t autosave_flag = 1; //0 save needed, 1 no save needed
 
+static volatile int8_t buttonpress_index = -1;
 static volatile uint8_t buttonpress_counter = 0;
 //-----------------------------------------------------------
 ISR (TIMER0_COMPA_vect)
@@ -75,10 +76,20 @@ ISR (TIMER1_COMPA_vect)
   buttonpress_counter++;
 }
 //-----------------------------------------------------------
-void timer_touchButtonpress()
+void timer_buttonPress(uint8_t buttonNum)
 {
   //reset press counter
+  buttonpress_index = buttonNum;
   buttonpress_counter = 0;
+}
+//-----------------------------------------------------------
+void timer_buttonRelease(uint8_t buttonNum)
+{
+  //reset press counter
+  if (buttonpress_index == buttonNum) {
+    buttonpress_index = -1;
+    buttonpress_counter = 0;
+  }
 }
 //-----------------------------------------------------------
 void timer_touchAutosave()
@@ -89,8 +100,8 @@ void timer_touchAutosave()
   autosave_counter = 0;
 }
 //-----------------------------------------------------------
-uint8_t timer_isLongPress() {
-  return !!(buttonpress_counter >= LONGPRESS_TIME);
+uint8_t timer_isLongButtonPress(uint8_t buttonNum) {
+  return !!(buttonNum == buttonpress_index && buttonpress_counter >= LONGPRESS_TIME);
 }
 //-----------------------------------------------------------
 void checkAutosave()

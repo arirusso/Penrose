@@ -60,6 +60,8 @@ static const uint8_t ledPinArray[12][2] PROGMEM = {
 static uint16_t io_ledState=0xfff;		//state of the 12 LEDs == activated notes
 static uint8_t io_activeStep=2;			//current active quantisation step == currently played note
 static uint16_t io_lastButtonState=0x00;
+static uint8_t isShiftActive = 0;
+static uint8_t octaveOffset = OCTAVE_MIN * -1;
 //-----------------------------------------------------------
 void io_init()
 {
@@ -77,9 +79,15 @@ void io_init()
   //all buttown columns as outs, state high
   COL_DDR |= (1<<COL1_PIN) | (1<<COL2_PIN) | (1<<COL3_PIN) | (1<<COL4_PIN);
   COL_PORT |= ((1<<COL1_PIN) | (1<<COL2_PIN) | (1<<COL3_PIN) | (1<<COL4_PIN));
+
 };
 //-----------------------------------------------------------
 uint16_t io_getActiveSteps()
+{
+  return io_ledState;
+}
+//-----------------------------------------------------------
+uint16_t io_getState()
 {
   return io_ledState;
 }
@@ -184,16 +192,17 @@ void io_processLed()
 };
 //-----------------------------------------------------------
 static uint8_t ledState = 0;
+
 void io_processLedPipelined()
 {
   turnAllLedsOff();
 
-  if(ledState==io_activeStep)
+  if ((!io_isShiftActive() && ledState == io_activeStep) || (io_isShiftActive() && (io_octaveNum + octaveOffset) >= ledState))
   {
     //this step is currently played => set color 1
     turnLedOn(ledState,0);
   }
-  else if ( (io_ledState & (1<<ledState)) > 0)
+  else if (!io_isShiftActive() && ((io_ledState & (1<<ledState)) > 0))
   {
     //step is active => colour 2
     turnLedOn(ledState,1);
@@ -263,10 +272,13 @@ void io_processButtons()
 static uint8_t buttonRowIndex = 0;
 static uint8_t buttonColIndex = 0;
 static uint8_t ledNr = 0;
-static uint8_t isShiftActive = 0;
 
 uint8_t io_isButtonLongPushed(uint8_t num) {
-  return (timer_isLongPress() && ledNr == num);
+  return (timer_isLongButtonPress(num));
+}
+
+uint8_t io_isShiftActive() {
+  return isShiftActive;
 }
 
 void io_processButtonsPipelined()
@@ -305,24 +317,26 @@ void io_processButtonsPipelined()
 
 		//toggle LED
     if(val) {
-      if (isShiftActive) {
-        io_handleShiftedButtonPushed(ledNr);
+      timer_buttonPress(i);
+      if (io_isShiftActive()) {
+        io_handleShiftedButtonPushed(i);
       }
-    } else if (!io_isButtonLongPushed(ledNr)) {
+    } else {
+      // button released
+      if (i == BUTTON_SHIFT) {
+        io_disableShiftMode();
+      }
       timer_touchAutosave();
-		  if(!(io_ledState&(1<<i)))
-		  {
+		  if(!(io_ledState&(1<<i))) {
 		    io_ledState |= 1<<i;
-		  } else
-		  {
+		  } else {
 		    io_ledState &= ~(1<<i);
       }
-      isShiftActive = 0;
-      timer_touchButtonpress();
+      timer_buttonRelease(i);
 		}
   } else {
-    if (val && ledNr == BUTTON_SHIFT && io_isButtonLongPushed(ledNr)) {
-      io_enableShiftMode(ledNr);
+    if (val && i == BUTTON_SHIFT && io_isButtonLongPushed(i)) {
+      io_enableShiftMode(i);
     }
   }
 
@@ -345,17 +359,21 @@ void io_enableShiftMode() {
   isShiftActive = 1;
 }
 //-----------------------------------------------------------
+void io_disableShiftMode() {
+  isShiftActive = 0;
+}
+//-----------------------------------------------------------
 void io_handleShiftedButtonPushed(uint8_t buttonNr) {
   switch (buttonNr) {
     case SHIFTED_BUTTON_OCTAVE_DOWN: {
-        if (octaveNum > 0) {
-          octaveNum -= 1;
+        if (io_octaveNum > OCTAVE_MIN) {
+          io_octaveNum -= 1;
         }
       }
       break;
     case SHIFTED_BUTTON_OCTAVE_UP: {
-        if (octaveNum < 7) {
-          octaveNum += 1;
+        if (io_octaveNum < OCTAVE_MAX) {
+          io_octaveNum += 1;
         }
       }
       break;
