@@ -3,7 +3,7 @@
  *
  *  Copyright 2015 Julian Schmidt, Sonic Potions <julian@sonic-potions.com>
  *  Web: www.sonic-potions.com/penrose
- * 
+ *
  *  This file is part of the Penrose Quantizer Firmware.
  *
  *  The Penrose Quantizer Firmware is free software: you can redistribute it and/or modify
@@ -18,11 +18,11 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with the Penrose Quantizer Firmware.  If not, see <http://www.gnu.org/licenses/>.
- */ 
+ */
 
 #include "IoMatrix.h"
 #include <util/delay.h>
-#include <avr/pgmspace.h> 
+#include <avr/pgmspace.h>
 #include "spi.h"
 #include "timebase.h"
 
@@ -66,14 +66,14 @@ void io_init()
   //all LED pins as inputs => off
   LED_DDR_13 &= ~(  (1<<LED_1_PIN) | (1<<LED_2_PIN) | (1<<LED_3_PIN)  );
   LED_DDR_46 &= ~(  (1<<LED_4_PIN) | (1<<LED_5_PIN) | (1<<LED_6_PIN)  );
-  
+
   //all buttons rows as inputs (attention SS pin used!)
   SWITCH_DDR_12 &= ~(  (1<<SWITCH_ROW1_PIN) | (1<<SWITCH_ROW2_PIN) );
   SWITCH_DDR_3 &= ~(1<<SWITCH_ROW3_PIN);
   //pullup on
   SWITCH_PORT_12 |= (1<<SWITCH_ROW1_PIN) | (1<<SWITCH_ROW2_PIN);
   SWITCH_PORT_3 |= (1<<SWITCH_ROW3_PIN);
-  
+
   //all buttown columns as outs, state high
   COL_DDR |= (1<<COL1_PIN) | (1<<COL2_PIN) | (1<<COL3_PIN) | (1<<COL4_PIN);
   COL_PORT |= ((1<<COL1_PIN) | (1<<COL2_PIN) | (1<<COL3_PIN) | (1<<COL4_PIN));
@@ -99,7 +99,7 @@ void turnAllLedsOff()
   //all pins low / no pullup
   LED_PORT_13 &= ~( (1<<LED_1_PIN) | (1<<LED_2_PIN) | (1<<LED_3_PIN) );
   LED_PORT_46 &= ~( (1<<LED_4_PIN) | (1<<LED_5_PIN) | (1<<LED_6_PIN) );
-  
+
   //all LED pins as inputs => off
   LED_DDR_13 &= ~(  (1<<LED_1_PIN) | (1<<LED_2_PIN) | (1<<LED_3_PIN)  );
   LED_DDR_46 &= ~(  (1<<LED_4_PIN) | (1<<LED_5_PIN) | (1<<LED_6_PIN)  );
@@ -110,7 +110,7 @@ void turnLedOn(uint16_t ledNr, uint8_t colour)
   //get the needed pins from the LED array
   uint8_t pinA = pgm_read_byte(&ledPinArray[ledNr][0]);
   uint8_t pinB = pgm_read_byte(&ledPinArray[ledNr][1]);
-  
+
   if(colour)
   {
     //colour 2 -> A=0, B=1
@@ -124,7 +124,7 @@ void turnLedOn(uint16_t ledNr, uint8_t colour)
       LED_DDR_13	|= (1<<pinA);
       LED_PORT_13	&= ~(1<<pinA);
     }
-    
+
     if(pinB > LED_3_PIN)
     {
       LED_DDR_46	|= (1<<pinB);	//pin as output
@@ -149,7 +149,7 @@ void turnLedOn(uint16_t ledNr, uint8_t colour)
       LED_DDR_13	|= (1<<pinA);
       LED_PORT_13	|= (1<<pinA);
     }
-    
+
     if(pinB > LED_3_PIN)
     {
       LED_DDR_46	|= (1<<pinB);	//pin as output
@@ -159,7 +159,7 @@ void turnLedOn(uint16_t ledNr, uint8_t colour)
     {
       LED_DDR_13	|= (1<<pinB);
       LED_PORT_13	&= ~(1<<pinB);
-    }    
+    }
   }
 }
 //-----------------------------------------------------------
@@ -167,12 +167,12 @@ void turnLedOn(uint16_t ledNr, uint8_t colour)
 void io_processLed()
 {
   for(int i=0; i<12; i++)
-  {    
+  {
     if(i==io_activeStep)
     {
       //this step is currently played => set color 1
       turnLedOn(i,0);
-    } 
+    }
     else if ( (io_ledState & (1<<i)) > 0)
     {
       //step is active => colour 2
@@ -192,25 +192,25 @@ void io_processLedPipelined()
   {
     //this step is currently played => set color 1
     turnLedOn(ledState,0);
-  } 
+  }
   else if ( (io_ledState & (1<<ledState)) > 0)
   {
     //step is active => colour 2
     turnLedOn(ledState,1);
   }
-  
+
   ledState++;
   if(ledState>=12) ledState=0;
 };
 //-----------------------------------------------------------
-//read button matrix 
+//read button matrix
 void io_processButtons()
 {
 	uint8_t col;
 	uint8_t row;
 	uint8_t i=0;
 	uint16_t val;
-	
+
 	for(row=0;row<3;row++)
 	{
 	  for(col=0;col<4;col++)
@@ -219,23 +219,23 @@ void io_processButtons()
 		COL_PORT |= ( (1<<COL1_PIN) | (1<<COL2_PIN) | (1<<COL3_PIN) | (1<<COL4_PIN) );
 		//pin low for active column
 		COL_PORT &= ~(1<<col);
-		
+
 		//read active row input
 		switch(row)
 		{
 		  case 0:
 		      val = (SWITCH_INPUT_12 & (1<<SWITCH_ROW1_PIN) ) == 0;
 		      break;
-		  
+
 		  case 1:
 		      val = (SWITCH_INPUT_12 & (1<<SWITCH_ROW2_PIN) ) == 0;
 		      break;
-		    
+
 		  case 2:
 		      val = (SWITCH_INPUT_3 & (1<<SWITCH_ROW3_PIN) ) == 0;
 		      break;
 		}
-	    
+
 		//check if the button changed its state since the last call
 		if(   (io_lastButtonState&(1<<i))   != (val<<i)   )
 		{
@@ -249,7 +249,7 @@ void io_processButtons()
 			  if(!(io_ledState&(1<<i)))
 			  {
 			    io_ledState |= 1<<i;
-			  } else 
+			  } else
 			  {
 			    io_ledState &= ~(1<<i);
 			  }
@@ -263,17 +263,22 @@ void io_processButtons()
 static uint8_t buttonRowIndex = 0;
 static uint8_t buttonColIndex = 0;
 static uint8_t ledNr = 0;
+static uint8_t isShiftActive = 0;
+
+uint8_t io_isButtonLongPushed(uint8_t num) {
+  return (timer_isLongPress() && ledNr == num);
+}
 
 void io_processButtonsPipelined()
 {
 	uint8_t i= ledNr;
 	uint16_t val;
-	  
+
 	//all columns on
 	COL_PORT |= ( (1<<COL1_PIN) | (1<<COL2_PIN) | (1<<COL3_PIN) | (1<<COL4_PIN) );
 	//pin low for active column
 	COL_PORT &= ~(1<<buttonColIndex);
-	
+
 	//read active row input
 	switch(buttonRowIndex)
 	{
@@ -281,38 +286,51 @@ void io_processButtonsPipelined()
 	  case 0:
 	      val = (SWITCH_INPUT_12 & (1<<SWITCH_ROW1_PIN) ) == 0;
 	      break;
-	  
+
 	  case 1:
 	      val = (SWITCH_INPUT_12 & (1<<SWITCH_ROW2_PIN) ) == 0;
 	      break;
-	    
+
 	  case 2:
 	      val = (SWITCH_INPUT_3 & (1<<SWITCH_ROW3_PIN) ) == 0;
 	      break;
 	}
-    
+
 	//check if the button changed its state since the last call
 	if(   (io_lastButtonState&(1<<i))   != (val<<i)   )
 	{
 		//update state memory
 		io_lastButtonState &= ~(1<<i);
 		io_lastButtonState |=val<<i;
+
 		//toggle LED
-		if(!val)
-		{
-		  timer_touchAutosave();
+    if(val) {
+      if (isShiftActive) {
+        io_handleShift(ledNr);
+      }
+    } else if (!io_isButtonLongPushed(ledNr)) {
+      timer_touchAutosave();
 		  if(!(io_ledState&(1<<i)))
 		  {
 		    io_ledState |= 1<<i;
-		  } else 
+		  } else
 		  {
 		    io_ledState &= ~(1<<i);
-		  }
+      }
+      isShiftActive = 0;
+      timer_touchButtonpress();
 		}
-	}
-	
+  } else {
+    if (val && io_isButtonLongPushed(ledNr)) {
+      switch (ledNr) {
+        case BUTTON_SHIFT: isShiftActive = 1;
+                break;
+      }
+    }
+  }
+
 	ledNr++;
-	
+
 	buttonColIndex++;
 	if(buttonColIndex>=4)
 	{
@@ -326,6 +344,23 @@ void io_processButtonsPipelined()
 	}
 }
 //-----------------------------------------------------------
+void io_handleShift(uint8_t buttonNr) {
+  switch (buttonNr) {
+    case SHIFTED_BUTTON_OCTAVE_DOWN: {
+        if (octaveNum > 0) {
+          octaveNum -= 1;
+        }
+      }
+      break;
+    case SHIFTED_BUTTON_OCTAVE_UP: {
+        if (octaveNum < 7) {
+          octaveNum += 1;
+        }
+      }
+      break;
+  }
+}
+//-----------------------------------------------------------
 uint8_t io_isButtonPushed(uint8_t buttonNr)
 {
   uint8_t row = buttonNr/4; // [0:2]
@@ -335,7 +370,7 @@ uint8_t io_isButtonPushed(uint8_t buttonNr)
   COL_PORT |= ( (1<<COL1_PIN) | (1<<COL2_PIN) | (1<<COL3_PIN) | (1<<COL4_PIN) );
   //pin low for active column
   COL_PORT &= ~(1<<col);
-  
+
   //read active row input
   uint8_t val = 0;
   switch(row)
@@ -347,12 +382,12 @@ uint8_t io_isButtonPushed(uint8_t buttonNr)
   case 1:
       val = (SWITCH_INPUT_12 & (1<<SWITCH_ROW2_PIN) ) == 0;
       break;
-    
+
   case 2:
       val = (SWITCH_INPUT_3 & (1<<SWITCH_ROW3_PIN) ) == 0;
       break;
   }
-  
+
   return val;
 }
 //-----------------------------------------------------------

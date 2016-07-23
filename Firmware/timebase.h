@@ -3,7 +3,7 @@
  *
  *  Copyright 2015 Julian Schmidt, Sonic Potions <julian@sonic-potions.com>
  *  Web: www.sonic-potions.com/penrose
- * 
+ *
  *  This file is part of the Penrose Quantizer Firmware.
  *
  *  The Penrose Quantizer Firmware is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with the Penrose Quantizer Firmware.  If not, see <http://www.gnu.org/licenses/>.
- */ 
+ */
 
 
 #include <avr/io.h>
@@ -26,6 +26,7 @@
 
 #define GATE_LENGTH 12 // [ms] maximum is 12 (=>240, more will not fit into OCR0A and a 16 bit timer must be used)
 #define AUTOSAVE_TIME 15 // [sec]
+#define LONGPRESS_TIME 2 // [sec]
 
 void timer_init();
 
@@ -41,13 +42,7 @@ void timer0_start();
  * - autosave should only happen AUTOSAVE_TIME seconds after the last change
  */
 void timer_touchAutosave();
-
+void timer_touchButtonpress();
 /* checks timer variables if an autosave is needed */
 void checkAutosave();
-
-
-
-
-
-
-
+uint8_t timer_isLongPress();

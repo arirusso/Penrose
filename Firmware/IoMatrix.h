@@ -3,7 +3,7 @@
  *
  *  Copyright 2015 Julian Schmidt, Sonic Potions <julian@sonic-potions.com>
  *  Web: www.sonic-potions.com/penrose
- * 
+ *
  *  This file is part of the Penrose Quantizer Firmware.
  *
  *  The Penrose Quantizer Firmware is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with the Penrose Quantizer Firmware.  If not, see <http://www.gnu.org/licenses/>.
- */ 
+ */
 
 
 #ifndef IOMATRIX_H_
@@ -60,6 +60,10 @@
 #define LED_DDR_46		DDRD
 
 //-----------------------------------------------------------
+#define BUTTON_SHIFT 11
+#define SHIFTED_BUTTON_OCTAVE_DOWN 0
+#define SHIFTED_BUTTON_OCTAVE_UP 1
+
 void io_init();
 //one circle trough the whole LED matrix
 void io_processLed();
@@ -73,6 +77,8 @@ uint16_t io_getActiveSteps();
 void io_setActiveSteps(uint16_t val);
 void io_setCurrentQuantizedValue(uint8_t value);
 uint8_t io_isButtonPushed(uint8_t buttonNr);
-
+uint8_t octaveNum;
+uint8_t io_isButtonLongPushed(uint8_t num);
+void io_handleShift(uint8_t buttonNr);
 
 #endif /* IOMATRIX_H_ */

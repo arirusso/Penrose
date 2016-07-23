@@ -2,11 +2,11 @@
  * timebase.c
  *
  * contains timer functions for autosave and gate length
- * 
- * 
+ *
+ *
  *  Copyright 2015 Julian Schmidt, Sonic Potions <julian@sonic-potions.com>
  *  Web: www.sonic-potions.com/penrose
- * 
+ *
  *  This file is part of the Penrose Quantizer Firmware.
  *
  *  The Penrose Quantizer Firmware is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with the Penrose Quantizer Firmware.  If not, see <http://www.gnu.org/licenses/>.
- */  
+ */
 
 
 #include "timebase.h"
@@ -31,6 +31,8 @@
 
 static volatile uint8_t autosave_counter = 0;
 static volatile uint8_t autosave_flag = 1; //0 save needed, 1 no save needed
+
+static volatile uint8_t buttonpress_counter = 0;
 //-----------------------------------------------------------
 ISR (TIMER0_COMPA_vect)
 {
@@ -45,9 +47,9 @@ void timer_init()
   // Timer 0 configuration
   TCCR0A = (1<<WGM01); // CTC Mode
   OCR0A = 20 * GATE_LENGTH;
-  // Enabel Compare Interrupt 
+  // Enabel Compare Interrupt
   TIMSK0 |= (1<<OCIE0A);
-  
+
   // Timer 1 (16-bit) configuration
   TCCR1B |= (1<<CS12) | (1<<CS10); //prescaler 1024
   // 20.000.000 / 1024 = 19531,25 = 1 sec
@@ -59,7 +61,7 @@ void timer_init()
 void timer0_start()
 {
   //reset timer
-  TCNT0 = 0; 
+  TCNT0 = 0;
   //start timer
   TCCR0B |= (1<<CS02) | (1<<CS00); // Prescaler 1024
 }
@@ -70,6 +72,13 @@ ISR (TIMER1_COMPA_vect)
   {
     autosave_counter++;
   }
+  buttonpress_counter++;
+}
+//-----------------------------------------------------------
+void timer_touchButtonpress()
+{
+  //reset press counter
+  buttonpress_counter = 0;
 }
 //-----------------------------------------------------------
 void timer_touchAutosave()
@@ -80,6 +89,10 @@ void timer_touchAutosave()
   autosave_counter = 0;
 }
 //-----------------------------------------------------------
+uint8_t timer_isLongPress() {
+  return !!(buttonpress_counter >= LONGPRESS_TIME);
+}
+//-----------------------------------------------------------
 void checkAutosave()
 {
   //only if autosave is needed
@@ -87,7 +100,7 @@ void checkAutosave()
   {
     if(autosave_counter >= AUTOSAVE_TIME)
     {
-      eeprom_WriteBuffer(io_getActiveSteps());    
+      eeprom_WriteBuffer(io_getActiveSteps());
       autosave_flag = 1;
     }
   }

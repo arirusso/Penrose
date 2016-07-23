@@ -3,7 +3,7 @@
  *
  *  Copyright 2015 Julian Schmidt, Sonic Potions <julian@sonic-potions.com>
  *  Web: www.sonic-potions.com/penrose
- * 
+ *
  *  This file is part of the Penrose Quantizer Firmware.
  *
  *  The Penrose Quantizer Firmware is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with the Penrose Quantizer Firmware.  If not, see <http://www.gnu.org/licenses/>.
- */ 
+ */
 
 #include <avr/io.h>
 
@@ -27,8 +27,8 @@
 #include "IoMatrix.h"
 #include "eeprom.h"
 #include "timebase.h"
-#include <util/delay.h> 
-#include <avr/interrupt.h>  
+#include <util/delay.h>
+#include <avr/interrupt.h>
 #include <stdlib.h>
 
 //-----------------------------------------------------------
@@ -62,7 +62,7 @@ void init()
 {
     // power save stuff
     ACSR |= (1<<ACD); //analog comparator off
-  
+
     //switch is input with pullup
     SWITCH_DDR &= ~(1<<SWITCH_PIN);
     SWITCH_PORT |= (1<<SWITCH_PIN);
@@ -77,9 +77,9 @@ void init()
     io_init();
 
     /*
-    Set up Interrupt for trigger input 
+    Set up Interrupt for trigger input
 
-    PCINT0 to PCINT7 refer to the PCINT0 interrupt, PCINT8 to PCINT14 refer to the PCINT1 interrupt 
+    PCINT0 to PCINT7 refer to the PCINT0 interrupt, PCINT8 to PCINT14 refer to the PCINT1 interrupt
     and PCINT15 to PCINT23 refer to the PCINT2 interrupt
     -->
     TRIGGER_INPUT_PIN = PD7 = PCINT23 = pcint2 pin change interrupt for trigger
@@ -88,9 +88,11 @@ void init()
 
     PCICR |= (1<<PCIE2);   //Enable PCINT2
     PCMSK2 |= (1<<PCINT23); //Trigger on change of PCINT23 (PD7)
-    
-       
+
+
     sei();
+
+    octaveNum = 3;
 }
 //-----------------------&= ------------------------------------
 void process()
@@ -110,9 +112,9 @@ ISR(PCINT2_vect)
 {
     if(bit_is_clear(PIND,7)) //only rising edge
     {
-	process();	
-    }	
-    return;	
+	process();
+    }
+    return;
 };
 //-----------------------------------------------------------
 static uint8_t lastInput=0;
@@ -124,18 +126,18 @@ uint8_t quantizeValue(uint16_t input)
     io_setCurrentQuantizedValue(99); //no active step LED
     return 0;
   }
-  
+
   if(abs(input-lastInput) >= 2)
   {
     lastInput = input;
   } else return lastQuantValue;
-  
+
 	//quantize input value to all steps
 	/* instead of input/ADC_STEPS_PER_NOTE we use the magic number 17 here.
 	 * ADC_STEPS_PER_NOTE = 8.5 which will reult in a rounding error pretty quick
 	 * so we use ADC_STEPS_PER_NOTE * 2 = 17
 	 * we shift the result up by ~ADC_STEPS_PER_NOTE/2 = 8
-	 * to bring the note values (played by keyboard fr example) in the middle of a step, 
+	 * to bring the note values (played by keyboard fr example) in the middle of a step,
 	 * thus increasing the note tracking over several octaves
 	 */
 	uint8_t quantValue = ((input<<1)+8)/17;//ADC_STEPS_PER_NOTE;
@@ -144,7 +146,7 @@ uint8_t quantizeValue(uint16_t input)
 	uint8_t octave = quantValue/12;
 	uint8_t note = quantValue-(octave*12);
 
-	
+
 	//quantize to active steps
 	//search for the lowest matching activated note (lit led)
 	int i=0;
@@ -152,16 +154,16 @@ uint8_t quantizeValue(uint16_t input)
 	{
 	  if( ((1<<  ((note+i)%12) ) & io_getActiveSteps()) != 0) break;
 	}
-	
+
 	note = note+i;
 	if(note>=12)
 	{
 	  note -= 12;
 	  octave++;
 	}
-	
-	quantValue = octave*12+note;
-	
+
+	quantValue = ((octave + octaveNum) * 12) + note;
+
 	//store to matrix
 	io_setCurrentQuantizedValue(note);
 	return quantValue*2;
@@ -170,13 +172,13 @@ uint8_t quantizeValue(uint16_t input)
 int main(void)
 {
     init();
-    
+
     //read last button state from eeprom
     io_setActiveSteps( eeprom_ReadBuffer());
-    
+
     while(1)
     {
-	//handle IOs (buttons + LED)		
+	//handle IOs (buttons + LED)
 	io_processButtonsPipelined();
 	io_processLedPipelined();
 
@@ -186,7 +188,7 @@ int main(void)
 	  //no gate cable plugged in
 	  //continuous mode
 	  process();
-	}	
+	}
     }
 }
 //-----------------------------------------------------------
