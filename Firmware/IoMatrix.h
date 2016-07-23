@@ -79,6 +79,7 @@ void io_setCurrentQuantizedValue(uint8_t value);
 uint8_t io_isButtonPushed(uint8_t buttonNr);
 uint8_t octaveNum;
 uint8_t io_isButtonLongPushed(uint8_t num);
-void io_handleShift(uint8_t buttonNr);
+void io_handleShiftedButtonPushed(uint8_t buttonNr);
+void io_enableShiftMode();
 
 #endif /* IOMATRIX_H_ */

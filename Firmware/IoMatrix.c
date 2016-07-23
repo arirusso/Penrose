@@ -306,7 +306,7 @@ void io_processButtonsPipelined()
 		//toggle LED
     if(val) {
       if (isShiftActive) {
-        io_handleShift(ledNr);
+        io_handleShiftedButtonPushed(ledNr);
       }
     } else if (!io_isButtonLongPushed(ledNr)) {
       timer_touchAutosave();
@@ -321,11 +321,8 @@ void io_processButtonsPipelined()
       timer_touchButtonpress();
 		}
   } else {
-    if (val && io_isButtonLongPushed(ledNr)) {
-      switch (ledNr) {
-        case BUTTON_SHIFT: isShiftActive = 1;
-                break;
-      }
+    if (val && ledNr == BUTTON_SHIFT && io_isButtonLongPushed(ledNr)) {
+      io_enableShiftMode(ledNr);
     }
   }
 
@@ -344,7 +341,11 @@ void io_processButtonsPipelined()
 	}
 }
 //-----------------------------------------------------------
-void io_handleShift(uint8_t buttonNr) {
+void io_enableShiftMode() {
+  isShiftActive = 1;
+}
+//-----------------------------------------------------------
+void io_handleShiftedButtonPushed(uint8_t buttonNr) {
   switch (buttonNr) {
     case SHIFTED_BUTTON_OCTAVE_DOWN: {
         if (octaveNum > 0) {
