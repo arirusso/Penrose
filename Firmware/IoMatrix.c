@@ -323,15 +323,17 @@ void io_processButtonsPipelined()
       }
     } else {
       // button released
+      if (!io_isShiftActive()) {
+        if(!(io_ledState&(1<<i))) {
+          io_ledState |= 1<<i;
+        } else {
+          io_ledState &= ~(1<<i);
+        }
+      }
       if (i == BUTTON_SHIFT) {
         io_disableShiftMode();
       }
       timer_touchAutosave();
-		  if(!(io_ledState&(1<<i))) {
-		    io_ledState |= 1<<i;
-		  } else {
-		    io_ledState &= ~(1<<i);
-      }
       timer_buttonRelease(i);
 		}
   } else {
@@ -372,7 +374,7 @@ void io_handleShiftedButtonPushed(uint8_t buttonNr) {
       }
       break;
     case SHIFTED_BUTTON_OCTAVE_UP: {
-        if (io_octaveNum < OCTAVE_MAX) {
+        if (io_octaveNum <= OCTAVE_MAX) {
           io_octaveNum += 1;
         }
       }
