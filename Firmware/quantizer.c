@@ -21,7 +21,7 @@
  */
 
 #include <avr/io.h>
-
+#include <math.h>
 #include "MCP4802.h"
 #include "adc.h"
 #include "IoMatrix.h"
@@ -162,7 +162,15 @@ uint8_t quantizeValue(uint16_t input)
 	  octave++;
 	}
 
-	quantValue = ((octave + io_octaveNum) * 12) + note;
+  // limit result
+  int16_t base = (octave + io_octaveNum) * 12;
+  if (base < 1) {
+    base = 1;
+  } else if (base > 255) {
+    base = 255;
+  }
+
+	quantValue = ((uint8_t)base) + note;
 
 	//store to matrix
 	io_setCurrentQuantizedValue(note);
